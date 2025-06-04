@@ -10,11 +10,29 @@ export const useTimer = () => {
   const [totalMinutes, setTotalMinutes] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [prevElapsed, setPrevElapsed] = useState(0);
   const [records, setRecords] = useState<ActivityRecord[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const alarmRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('activity_records');
+    if (stored) {
+      try {
+        setRecords(JSON.parse(stored));
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (records.length > 0) {
+      localStorage.setItem('activity_records', JSON.stringify(records));
+    }
+  }, [records]);
 
   const playNotificationSound = () => {
     if (!alarmRef.current) {
@@ -42,37 +60,43 @@ export const useTimer = () => {
     setTotalMinutes(minutes);
     setRemainingSeconds(minutes * 60);
     setElapsedSeconds(0);
+    setPrevElapsed(0);
     setIsRunning(true);
     setIsPaused(false);
     setStartTime(new Date());
   };
 
   const pauseTimer = () => {
+    if (startTime) {
+      setPrevElapsed(prev => prev + Math.floor((Date.now() - startTime.getTime()) / 1000));
+    }
     setIsPaused(true);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
+    setStartTime(null);
   };
 
   const resumeTimer = () => {
+    setStartTime(new Date());
     setIsPaused(false);
   };
 
   const stopTimer = () => {
     stopNotificationSound();
     setIsCompleted(false);
-    if (startTime) {
+    if (startTime || prevElapsed > 0) {
       const endTime = new Date();
-      
+      const elapsed = prevElapsed + (startTime ? Math.floor((Date.now() - startTime.getTime()) / 1000) : 0);
       const newRecord: ActivityRecord = {
         id: Date.now().toString(),
         activity: currentActivity,
         plannedMinutes: totalMinutes,
-        startTime: startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        startTime: (startTime ?? endTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
         endTime: endTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-        actualMinutes: elapsedSeconds / 60 // 정확한 초 단위 계산
+        actualMinutes: elapsed / 60
       };
-      
+
       setRecords(prev => [newRecord, ...prev]);
     }
     
@@ -80,6 +104,7 @@ export const useTimer = () => {
     setIsPaused(false);
     setRemainingSeconds(0);
     setElapsedSeconds(0);
+    setPrevElapsed(0);
     setCurrentActivity('');
     setTotalMinutes(0);
     setStartTime(null);
@@ -92,35 +117,36 @@ export const useTimer = () => {
   useEffect(() => {
     if (isRunning && !isPaused) {
       intervalRef.current = setInterval(() => {
-        setElapsedSeconds(prev => prev + 1);
-        setRemainingSeconds(prev => {
-          if (prev <= 1) {
-            // 타이머 완료 시 알림음 반복 재생
-            playNotificationSound();
+        if (!startTime) return;
+        const elapsed = prevElapsed + Math.floor((Date.now() - startTime.getTime()) / 1000);
+        const remaining = totalMinutes * 60 - elapsed;
 
-            if (startTime) {
-              const endTime = new Date();
-              const newRecord: ActivityRecord = {
-                id: Date.now().toString(),
-                activity: currentActivity,
-                plannedMinutes: totalMinutes,
-                startTime: startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-                endTime: endTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-                actualMinutes: totalMinutes
-              };
+        if (remaining <= 0) {
+          playNotificationSound();
 
-              setRecords(prevRecords => [newRecord, ...prevRecords]);
-            }
+          const endTime = new Date();
+          const newRecord: ActivityRecord = {
+            id: Date.now().toString(),
+            activity: currentActivity,
+            plannedMinutes: totalMinutes,
+            startTime: startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+            endTime: endTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+            actualMinutes: totalMinutes
+          };
 
-            setIsRunning(false);
-            setIsPaused(false);
-            setIsCompleted(true);
-            setElapsedSeconds(0);
+          setRecords(prevRecords => [newRecord, ...prevRecords]);
 
-            return 0;
-          }
-          return prev - 1;
-        });
+          setIsRunning(false);
+          setIsPaused(false);
+          setIsCompleted(true);
+          setElapsedSeconds(0);
+          setPrevElapsed(0);
+          setStartTime(null);
+          setRemainingSeconds(0);
+        } else {
+          setElapsedSeconds(elapsed);
+          setRemainingSeconds(remaining);
+        }
       }, 1000);
     } else {
       if (intervalRef.current) {
@@ -133,7 +159,7 @@ export const useTimer = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, isPaused, currentActivity, totalMinutes, startTime]);
+  }, [isRunning, isPaused, currentActivity, totalMinutes, startTime, prevElapsed]);
 
   return {
     isRunning,
