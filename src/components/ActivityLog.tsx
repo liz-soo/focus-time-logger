@@ -17,8 +17,9 @@ interface ActivityLogProps {
 
 const ActivityLog = ({ records }: ActivityLogProps) => {
   const formatMinutesToMMSS = (minutes: number) => {
-    const mins = Math.floor(minutes);
-    const secs = Math.round((minutes - mins) * 60);
+    const totalSeconds = Math.round(minutes * 60);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
