@@ -27,10 +27,7 @@ const CircularTimer = ({
   const totalSeconds = totalMinutes * 60;
   const progress = (remainingSeconds / totalSeconds) * 100;
   
-  const minutes = Math.floor(remainingSeconds / 60);
-  const seconds = remainingSeconds % 60;
-  
-  // 파이 차트의 각도 계산 (360도에서 남은 시간 비율만큼)
+  // 파이 차트의 각도 계산 (12시 방향에서 시작)
   const angle = (progress / 100) * 360;
 
   if (!isRunning && !isPaused) {
@@ -38,7 +35,7 @@ const CircularTimer = ({
   }
 
   return (
-    <div className="flex flex-col items-center space-y-6 p-6 bg-white rounded-lg shadow-lg">
+    <div className="flex flex-col items-center space-y-4 p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-xl font-semibold text-gray-800 text-center">{activity}</h2>
       
       <div className="relative">
@@ -53,7 +50,7 @@ const CircularTimer = ({
             fill="none"
           />
           
-          {/* 파이 차트 형태의 남은 시간 표시 */}
+          {/* 파이 차트 형태의 남은 시간 표시 (12시 방향에서 시작) */}
           <path
             d={`M 100 100 L 100 10 A 90 90 0 ${angle > 180 ? 1 : 0} 1 ${
               100 + 90 * Math.sin((angle * Math.PI) / 180)
@@ -75,15 +72,10 @@ const CircularTimer = ({
             fill="none"
           />
         </svg>
-        
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-3xl font-bold text-gray-800">
-            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-          </div>
-          <div className="text-sm text-gray-500 mt-1">
-            {totalMinutes}분 중
-          </div>
-        </div>
+      </div>
+      
+      <div className="text-sm text-gray-500">
+        {totalMinutes}min
       </div>
       
       <div className="flex space-x-4">

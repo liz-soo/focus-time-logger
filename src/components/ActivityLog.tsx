@@ -16,6 +16,12 @@ interface ActivityLogProps {
 }
 
 const ActivityLog = ({ records }: ActivityLogProps) => {
+  const formatMinutesToMMSS = (minutes: number) => {
+    const mins = Math.floor(minutes);
+    const secs = Math.round((minutes - mins) * 60);
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
   if (records.length === 0) {
     return (
       <Card>
@@ -50,10 +56,10 @@ const ActivityLog = ({ records }: ActivityLogProps) => {
               {records.map((record) => (
                 <tr key={record.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-2">{record.activity}</td>
-                  <td className="py-3 px-2">{record.plannedMinutes}분</td>
+                  <td className="py-3 px-2">{formatMinutesToMMSS(record.plannedMinutes)}</td>
                   <td className="py-3 px-2">
                     <span className={record.actualMinutes < record.plannedMinutes ? 'text-orange-600' : 'text-green-600'}>
-                      {record.actualMinutes}분
+                      {formatMinutesToMMSS(record.actualMinutes)}
                     </span>
                   </td>
                   <td className="py-3 px-2">{record.startTime}</td>
