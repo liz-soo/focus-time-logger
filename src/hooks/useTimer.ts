@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { ActivityRecord } from '@/components/ActivityLog';
 
@@ -8,6 +9,7 @@ export const useTimer = () => {
   const [currentActivity, setCurrentActivity] = useState('');
   const [totalMinutes, setTotalMinutes] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [records, setRecords] = useState<ActivityRecord[]>([]);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -29,6 +31,7 @@ export const useTimer = () => {
     setCurrentActivity(activity);
     setTotalMinutes(minutes);
     setRemainingSeconds(minutes * 60);
+    setElapsedSeconds(0);
     setIsRunning(true);
     setIsPaused(false);
     setStartTime(new Date());
@@ -48,7 +51,6 @@ export const useTimer = () => {
   const stopTimer = () => {
     if (startTime) {
       const endTime = new Date();
-      const actualMinutes = Math.ceil((endTime.getTime() - startTime.getTime()) / 60000);
       
       const newRecord: ActivityRecord = {
         id: Date.now().toString(),
@@ -56,7 +58,7 @@ export const useTimer = () => {
         plannedMinutes: totalMinutes,
         startTime: startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
         endTime: endTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-        actualMinutes
+        actualMinutes: elapsedSeconds / 60 // 정확한 초 단위 계산
       };
       
       setRecords(prev => [newRecord, ...prev]);
@@ -65,6 +67,7 @@ export const useTimer = () => {
     setIsRunning(false);
     setIsPaused(false);
     setRemainingSeconds(0);
+    setElapsedSeconds(0);
     setCurrentActivity('');
     setTotalMinutes(0);
     setStartTime(null);
@@ -77,6 +80,7 @@ export const useTimer = () => {
   useEffect(() => {
     if (isRunning && !isPaused) {
       intervalRef.current = setInterval(() => {
+        setElapsedSeconds(prev => prev + 1);
         setRemainingSeconds(prev => {
           if (prev <= 1) {
             // 타이머 완료 시 더 긴 알림음 재생
@@ -90,7 +94,7 @@ export const useTimer = () => {
                 plannedMinutes: totalMinutes,
                 startTime: startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
                 endTime: endTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-                actualMinutes: totalMinutes
+                actualMinutes: totalMinutes // 완료 시에는 전체 시간
               };
               
               setRecords(prevRecords => [newRecord, ...prevRecords]);
@@ -101,6 +105,7 @@ export const useTimer = () => {
             setCurrentActivity('');
             setTotalMinutes(0);
             setStartTime(null);
+            setElapsedSeconds(0);
             
             return 0;
           }
@@ -124,6 +129,7 @@ export const useTimer = () => {
     isRunning,
     isPaused,
     remainingSeconds,
+    elapsedSeconds,
     currentActivity,
     totalMinutes,
     records,
