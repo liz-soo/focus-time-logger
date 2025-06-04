@@ -11,23 +11,33 @@ export const useTimer = () => {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [records, setRecords] = useState<ActivityRecord[]>([]);
+  const [isCompleted, setIsCompleted] = useState(false);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const alarmRef = useRef<HTMLAudioElement | null>(null);
 
   const playNotificationSound = () => {
-    // 더 긴 알림음을 위한 반복 재생
-    const beep = () => {
-      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+LyvmMeAzuF0vLNeSUGJoTM8NiKOAckccXv4o9EBxhl');
+    if (!alarmRef.current) {
+      const audio = new Audio(
+        'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+LyvmMeAzuF0vLNeSUGJoTM8NiKOAckccXv4o9EBxhl'
+      );
+      audio.loop = true;
       audio.play().catch(console.error);
-    };
-    
-    // 3번 반복하여 더 긴 알림음 효과
-    beep();
-    setTimeout(beep, 300);
-    setTimeout(beep, 600);
+      alarmRef.current = audio;
+    }
+  };
+
+  const stopNotificationSound = () => {
+    if (alarmRef.current) {
+      alarmRef.current.pause();
+      alarmRef.current.currentTime = 0;
+      alarmRef.current = null;
+    }
   };
 
   const startTimer = (activity: string, minutes: number) => {
+    stopNotificationSound();
+    setIsCompleted(false);
     setCurrentActivity(activity);
     setTotalMinutes(minutes);
     setRemainingSeconds(minutes * 60);
@@ -49,6 +59,8 @@ export const useTimer = () => {
   };
 
   const stopTimer = () => {
+    stopNotificationSound();
+    setIsCompleted(false);
     if (startTime) {
       const endTime = new Date();
       
@@ -83,9 +95,9 @@ export const useTimer = () => {
         setElapsedSeconds(prev => prev + 1);
         setRemainingSeconds(prev => {
           if (prev <= 1) {
-            // 타이머 완료 시 더 긴 알림음 재생
+            // 타이머 완료 시 알림음 반복 재생
             playNotificationSound();
-            
+
             if (startTime) {
               const endTime = new Date();
               const newRecord: ActivityRecord = {
@@ -94,19 +106,17 @@ export const useTimer = () => {
                 plannedMinutes: totalMinutes,
                 startTime: startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
                 endTime: endTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-                actualMinutes: totalMinutes // 완료 시에는 전체 시간
+                actualMinutes: totalMinutes
               };
-              
+
               setRecords(prevRecords => [newRecord, ...prevRecords]);
             }
-            
+
             setIsRunning(false);
             setIsPaused(false);
-            setCurrentActivity('');
-            setTotalMinutes(0);
-            setStartTime(null);
+            setIsCompleted(true);
             setElapsedSeconds(0);
-            
+
             return 0;
           }
           return prev - 1;
@@ -128,6 +138,7 @@ export const useTimer = () => {
   return {
     isRunning,
     isPaused,
+    isCompleted,
     remainingSeconds,
     elapsedSeconds,
     currentActivity,

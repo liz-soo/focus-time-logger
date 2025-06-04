@@ -9,6 +9,7 @@ const Index = () => {
   const {
     isRunning,
     isPaused,
+    isCompleted,
     remainingSeconds,
     currentActivity,
     totalMinutes,
@@ -31,22 +32,23 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16 items-center">
           <div className="flex justify-center lg:justify-end">
             <div className="w-full max-w-md">
-              <TimerForm 
+              <TimerForm
                 onStartTimer={startTimer}
-                isTimerRunning={isRunning}
+                isTimerRunning={isRunning || isCompleted}
               />
             </div>
           </div>
           
           <div className="flex justify-center lg:justify-start">
-            {/* 타이머가 실행 중일 때만 표시 */}
-            {(isRunning || isPaused) && (
+            {/* 타이머가 실행 중이거나 완료된 경우 표시 */}
+            {(isRunning || isPaused || isCompleted) && (
               <CircularTimer
                 activity={currentActivity}
                 totalMinutes={totalMinutes}
                 remainingSeconds={remainingSeconds}
                 isRunning={isRunning}
                 isPaused={isPaused}
+                isCompleted={isCompleted}
                 onPlay={resumeTimer}
                 onPause={pauseTimer}
                 onStop={stopTimer}

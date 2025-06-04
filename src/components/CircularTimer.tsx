@@ -9,6 +9,7 @@ interface CircularTimerProps {
   remainingSeconds: number;
   isRunning: boolean;
   isPaused: boolean;
+  isCompleted?: boolean;
   onPlay: () => void;
   onPause: () => void;
   onStop: () => void;
@@ -20,6 +21,7 @@ const CircularTimer = ({
   remainingSeconds,
   isRunning,
   isPaused,
+  isCompleted = false,
   onPlay,
   onPause,
   onStop
@@ -36,7 +38,7 @@ const CircularTimer = ({
   // 파이 차트의 각도 계산 (12시 방향에서 시작)
   const angle = (progress / 100) * 360;
 
-  if (!isRunning && !isPaused) {
+  if (!isRunning && !isPaused && !isCompleted) {
     return null;
   }
 
@@ -97,7 +99,9 @@ const CircularTimer = ({
       </div>
       
       <div className="flex space-x-4">
-        {isPaused ? (
+        {isCompleted ? (
+          <div className="flex items-center text-green-700 font-semibold text-lg">완료!</div>
+        ) : isPaused ? (
           <Button onClick={onPlay} className="bg-green-600 hover:bg-green-700 px-6 py-3 text-lg">
             <Play size={24} className="mr-2" />
             재시작
