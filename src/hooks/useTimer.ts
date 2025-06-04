@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { ActivityRecord } from '@/components/ActivityLog';
 
@@ -12,12 +11,19 @@ export const useTimer = () => {
   const [records, setRecords] = useState<ActivityRecord[]>([]);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => {
-    // 알림음을 위한 오디오 객체 생성
-    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+LyvmMeAzuF0vLNeSUGJoTM8NiKOAckccXv4o9EBxhl');
-  }, []);
+  const playNotificationSound = () => {
+    // 더 긴 알림음을 위한 반복 재생
+    const beep = () => {
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+LyvmMeAzuF0vLNeSUGJoTM8NiKOAckccXv4o9EBxhl');
+      audio.play().catch(console.error);
+    };
+    
+    // 3번 반복하여 더 긴 알림음 효과
+    beep();
+    setTimeout(beep, 300);
+    setTimeout(beep, 600);
+  };
 
   const startTimer = (activity: string, minutes: number) => {
     setCurrentActivity(activity);
@@ -73,10 +79,8 @@ export const useTimer = () => {
       intervalRef.current = setInterval(() => {
         setRemainingSeconds(prev => {
           if (prev <= 1) {
-            // 타이머 완료
-            if (audioRef.current) {
-              audioRef.current.play().catch(console.error);
-            }
+            // 타이머 완료 시 더 긴 알림음 재생
+            playNotificationSound();
             
             if (startTime) {
               const endTime = new Date();

@@ -27,13 +27,17 @@ const Index = () => {
           <p className="text-gray-600">집중력을 높이고 생산성을 향상시켜보세요</p>
         </div>
         
-        <div className="grid gap-8 md:grid-cols-2">
-          <div className="space-y-6">
+        {/* 타이머 설정 폼과 원형 타이머를 상단 중앙에 배치 */}
+        <div className="flex flex-col items-center space-y-8 mb-12">
+          <div className="w-full max-w-md">
             <TimerForm 
               onStartTimer={startTimer}
               isTimerRunning={isRunning}
             />
-            
+          </div>
+          
+          {/* 타이머가 실행 중일 때만 표시 */}
+          {(isRunning || isPaused) && (
             <CircularTimer
               activity={currentActivity}
               totalMinutes={totalMinutes}
@@ -44,11 +48,12 @@ const Index = () => {
               onPause={pauseTimer}
               onStop={stopTimer}
             />
-          </div>
-          
-          <div>
-            <ActivityLog records={records} />
-          </div>
+          )}
+        </div>
+        
+        {/* 활동 기록을 하단에 배치 */}
+        <div className="w-full">
+          <ActivityLog records={records} />
         </div>
       </div>
     </div>

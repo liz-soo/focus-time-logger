@@ -25,14 +25,13 @@ const CircularTimer = ({
   onStop
 }: CircularTimerProps) => {
   const totalSeconds = totalMinutes * 60;
-  const elapsedSeconds = totalSeconds - remainingSeconds;
-  const progress = (elapsedSeconds / totalSeconds) * 100;
+  const progress = (remainingSeconds / totalSeconds) * 100;
   
   const minutes = Math.floor(remainingSeconds / 60);
   const seconds = remainingSeconds % 60;
   
-  const circumference = 2 * Math.PI * 90;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  // 파이 차트의 각도 계산 (360도에서 남은 시간 비율만큼)
+  const angle = (progress / 100) * 360;
 
   if (!isRunning && !isPaused) {
     return null;
@@ -44,6 +43,7 @@ const CircularTimer = ({
       
       <div className="relative">
         <svg width="200" height="200" className="transform -rotate-90">
+          {/* 배경 원 */}
           <circle
             cx="100"
             cy="100"
@@ -52,17 +52,27 @@ const CircularTimer = ({
             strokeWidth="8"
             fill="none"
           />
+          
+          {/* 파이 차트 형태의 남은 시간 표시 */}
+          <path
+            d={`M 100 100 L 100 10 A 90 90 0 ${angle > 180 ? 1 : 0} 1 ${
+              100 + 90 * Math.sin((angle * Math.PI) / 180)
+            } ${
+              100 - 90 * Math.cos((angle * Math.PI) / 180)
+            } Z`}
+            fill="rgb(59, 130, 246)"
+            opacity="0.8"
+            className="transition-all duration-1000 ease-in-out"
+          />
+          
+          {/* 외곽선 */}
           <circle
             cx="100"
             cy="100"
             r="90"
             stroke="rgb(59, 130, 246)"
-            strokeWidth="8"
+            strokeWidth="2"
             fill="none"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-in-out"
           />
         </svg>
         
