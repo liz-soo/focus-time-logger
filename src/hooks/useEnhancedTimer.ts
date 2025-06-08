@@ -1,6 +1,5 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { ActivityRecord } from '@/components/ActivityLog';
 
 export const useEnhancedTimer = (onSaveRecord: (record: any) => Promise<boolean>) => {
   const [isRunning, setIsRunning] = useState(false);
@@ -15,39 +14,6 @@ export const useEnhancedTimer = (onSaveRecord: (record: any) => Promise<boolean>
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const alarmRef = useRef<HTMLAudioElement | null>(null);
   const pauseStartTimeRef = useRef<Date | null>(null);
-
-  // visibilitychange 이벤트 처리
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // 탭이 숨겨질 때
-        if (isRunning && !isPaused) {
-          console.log('Tab hidden - continuing timer in background');
-        }
-      } else {
-        // 탭이 다시 보일 때
-        if (isRunning && !isPaused && startTime) {
-          console.log('Tab visible - syncing timer');
-          // 실제 경과 시간을 다시 계산
-          const now = new Date();
-          const actualElapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000) - pausedTime;
-          const remaining = totalMinutes * 60 - actualElapsed;
-          
-          if (remaining <= 0) {
-            // 백그라운드에서 완료된 경우
-            handleTimerComplete();
-          } else {
-            setRemainingSeconds(remaining);
-          }
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [isRunning, isPaused, startTime, totalMinutes, pausedTime]);
 
   const playNotificationSound = () => {
     if (!alarmRef.current) {
@@ -156,6 +122,7 @@ export const useEnhancedTimer = (onSaveRecord: (record: any) => Promise<boolean>
     }
   };
 
+  // 메인 타이머 interval 효과
   useEffect(() => {
     if (isRunning && !isPaused && startTime) {
       intervalRef.current = setInterval(() => {
@@ -179,6 +146,37 @@ export const useEnhancedTimer = (onSaveRecord: (record: any) => Promise<boolean>
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+    };
+  }, [isRunning, isPaused, startTime, totalMinutes, pausedTime]);
+
+  // visibilitychange 이벤트 처리 (별도 useEffect)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // 탭이 숨겨질 때
+        console.log('Tab hidden - timer running in background');
+      } else {
+        // 탭이 다시 보일 때
+        if (isRunning && !isPaused && startTime) {
+          console.log('Tab visible - syncing timer');
+          // 실제 경과 시간을 다시 계산
+          const now = new Date();
+          const actualElapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000) - pausedTime;
+          const remaining = totalMinutes * 60 - actualElapsed;
+          
+          if (remaining <= 0) {
+            // 백그라운드에서 완료된 경우
+            handleTimerComplete();
+          } else {
+            setRemainingSeconds(remaining);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isRunning, isPaused, startTime, totalMinutes, pausedTime]);
 
