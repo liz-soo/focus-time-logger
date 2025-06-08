@@ -14,9 +14,10 @@ export interface ActivityRecord {
 
 interface ActivityLogProps {
   records: ActivityRecord[];
+  isLoading?: boolean;
 }
 
-const ActivityLog = ({ records }: ActivityLogProps) => {
+const ActivityLog = ({ records, isLoading = false }: ActivityLogProps) => {
   const exportCsv = () => {
     const header = ['무엇을', '계획시간', '실제시간', '시작시간', '종료시간'];
     const rows = records.map(r => [r.activity, r.plannedMinutes, r.actualMinutes.toFixed(2), r.startTime, r.endTime]);
@@ -25,16 +26,33 @@ const ActivityLog = ({ records }: ActivityLogProps) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'records.csv';
+    link.download = 'activity_records.csv';
     link.click();
     URL.revokeObjectURL(url);
   };
+  
   const formatMinutesToMMSS = (minutes: number) => {
     const totalSeconds = Math.round(minutes * 60);
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>활동 기록</CardTitle>
+            <Button size="sm" variant="outline" disabled>CSV 다운로드</Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500 text-center py-8">기록을 불러오는 중...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (records.length === 0) {
     return (
@@ -56,7 +74,7 @@ const ActivityLog = ({ records }: ActivityLogProps) => {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>활동 기록</CardTitle>
+          <CardTitle>활동 기록 ({records.length}개)</CardTitle>
           <Button size="sm" variant="outline" onClick={exportCsv}>CSV 다운로드</Button>
         </div>
       </CardHeader>

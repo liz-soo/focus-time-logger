@@ -3,9 +3,12 @@ import React from 'react';
 import TimerForm from '@/components/TimerForm';
 import CircularTimer from '@/components/CircularTimer';
 import ActivityLog from '@/components/ActivityLog';
-import { useTimer } from '@/hooks/useTimer';
+import { useEnhancedTimer } from '@/hooks/useEnhancedTimer';
+import { useActivityRecords } from '@/hooks/useActivityRecords';
 
 const Index = () => {
+  const { records, isLoading, saveRecord } = useActivityRecords();
+  
   const {
     isRunning,
     isPaused,
@@ -13,12 +16,11 @@ const Index = () => {
     remainingSeconds,
     currentActivity,
     totalMinutes,
-    records,
     startTimer,
     pauseTimer,
     resumeTimer,
     stopTimer
-  } = useTimer();
+  } = useEnhancedTimer(saveRecord);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
@@ -59,7 +61,7 @@ const Index = () => {
         
         {/* 활동 기록을 하단에 배치 */}
         <div className="w-full">
-          <ActivityLog records={records} />
+          <ActivityLog records={records} isLoading={isLoading} />
         </div>
       </div>
     </div>
